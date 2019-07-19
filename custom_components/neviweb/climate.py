@@ -13,19 +13,18 @@ import time
 
 import custom_components.neviweb as neviweb
 from . import (SCAN_INTERVAL)
-from homeassistant.components.climate import (ClimateDevice, ATTR_TEMPERATURE,
-    ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_OPERATION_LIST, ATTR_CURRENT_TEMPERATURE)
-from homeassistant.components.climate.const import (STATE_HEAT, 
-    STATE_IDLE, STATE_AUTO, STATE_MANUAL, SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, SUPPORT_ON_OFF)
-from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, STATE_OFF)
+from homeassistant.components.climate import (ClimateDevice, ATTR_ENTITY_ID, ATTR_TEMPERATURE,
+    ATTR_PRESET_MODE, ATTR_HVAC_MODE, ATTR_HVAC_MODES, ATTR_HVAC_ACTIONS, ATTR_CURRENT_TEMPERATURE)
+from homeassistant.components.climate.const import (CURRENT_HVAC_HEAT, 
+    CURRENT_HVAC_IDLE, HVAC_MODE_AUTO, HVAC_MODE_OFF, SUPPORT_TARGET_TEMPERATURE,
+    HVAC_MODE_HEAT, SUPPORT_PRESET_MODE)
+from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
-    SUPPORT_AWAY_MODE | SUPPORT_ON_OFF)
+SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE)
 
 DEFAULT_NAME = "neviweb climate"
 
@@ -127,10 +126,10 @@ class NeviwebThermostat(ClimateDevice):
     def state(self):
         """Return current state i.e. heat, off, idle."""
         if self.is_on:
-            return STATE_HEAT
+            return HVAC_MODE_HEAT
         if self._operation_mode == NEVIWEB_STATE_OFF:
-            return STATE_OFF
-        return STATE_IDLE
+            return HVAC_MODE_OFF
+        return CURRENT_HVAC_IDLE #STATE_IDLE
 
     @property
     def device_state_attributes(self):
@@ -170,7 +169,7 @@ class NeviwebThermostat(ClimateDevice):
     @property
     def operation_list(self):
         """Return the list of available operation modes."""
-        return OPERATION_LIST
+        return HVAC_MODES #OPERATION_LIST
 
     @property
     def current_temperature(self):
