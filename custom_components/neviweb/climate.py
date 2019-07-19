@@ -18,7 +18,7 @@ from homeassistant.components.climate import (ClimateDevice, ATTR_ENTITY_ID, ATT
 from homeassistant.components.climate.const import (CURRENT_HVAC_HEAT, 
     CURRENT_HVAC_IDLE, HVAC_MODE_AUTO, HVAC_MODE_OFF, SUPPORT_TARGET_TEMPERATURE,
     HVAC_MODE_HEAT, SUPPORT_PRESET_MODE)
-from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT)
+from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, STATE_OFF)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
@@ -34,7 +34,7 @@ STATE_MANUAL = 'manual'
 NEVIWEB_STATE_AWAY = 5
 NEVIWEB_STATE_OFF = 0
 NEVIWEB_TO_HA_STATE = {
-    0: HVAC_MODE_OFF,
+    0: STATE_OFF,
     2: STATE_MANUAL,
     3: HVAC_MODE_AUTO,
     5: STATE_AWAY,
