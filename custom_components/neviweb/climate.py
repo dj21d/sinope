@@ -35,7 +35,7 @@ NEVIWEB_STATE_AWAY = 5
 NEVIWEB_STATE_OFF = 0
 NEVIWEB_TO_HA_PRESET = {
     0: STATE_OFF,
-    2: SPRESET_MANUAL,
+    2: PRESET_MANUAL,
     3: HVAC_MODE_AUTO,
     5: PRESET_AWAY,
     129: PRESET_STANDBY,
@@ -44,8 +44,7 @@ NEVIWEB_TO_HA_PRESET = {
 }
 HA_TO_NEVIWEB_STATE = {
     value: key for key, value in NEVIWEB_TO_HA_PRESET.items()
-}
-OPERATION_LIST = [STATE_OFF, PRESET_MANUAL, HVAC_MODE_AUTO, PRESET_AWAY, PRESET_STANDBY]
+PRESET_LIST = [STATE_OFF, PRESET_MANUAL, HVAC_MODE_AUTO, PRESET_AWAY, PRESET_STANDBY]
 
 IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
 
@@ -149,12 +148,12 @@ class NeviwebThermostat(ClimateDevice):
 
     @property
     def min_temp(self):
-        """Return the min temperature."""
+        """Return the minimum temperature we can set."""
         return self._min_temp
 
     @property
     def max_temp(self):
-        """Return the max temperature."""
+        """Return the maximum temperature we can set."""
         return self._max_temp
 
     @property
@@ -219,11 +218,11 @@ class NeviwebThermostat(ClimateDevice):
     def is_away_mode_on(self):
         return self._is_away
 
- #   @property
- #   def is_on(self):
- #       if self._heat_level == None:
- #           self._heat_level = 0
- #       return self._heat_level > 0
+#   @property
+#   def is_on(self):
+#       if self._heat_level == None:
+#           self._heat_level = 0
+#       return self._heat_level > 0
 
     def set_temperature(self, **kwargs):
         """Set new target temperature."""
@@ -242,7 +241,7 @@ class NeviwebThermostat(ClimateDevice):
         """Translate hass operation modes to neviweb modes."""
         if mode in HA_TO_NEVIWEB_STATE:
             return HA_TO_NEVIWEB_STATE[mode]
-        _LOGGER.error("Operation mode %s could not be mapped to neviweb", mode)
+        _LOGGER.error("Hvac mode %s could not be mapped to neviweb", mode)
         return None
         
     def to_hass_operation_mode(self, mode):
