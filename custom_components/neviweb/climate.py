@@ -28,24 +28,24 @@ SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE)
 
 DEFAULT_NAME = "neviweb climate"
 
-STATE_STANDBY = 'bypass'
-STATE_AWAY = 'away'
-STATE_MANUAL = 'manual'
+PRESET_STANDBY = 'bypass'
+PRESET_AWAY = 'away'
+PRESET_MANUAL = 'manual'
 NEVIWEB_STATE_AWAY = 5
 NEVIWEB_STATE_OFF = 0
-NEVIWEB_TO_HA_STATE = {
+NEVIWEB_TO_HA_PRESET = {
     0: STATE_OFF,
-    2: STATE_MANUAL,
+    2: SPRESET_MANUAL,
     3: HVAC_MODE_AUTO,
-    5: STATE_AWAY,
-    129: STATE_STANDBY,
-    131: STATE_STANDBY,
-    133: STATE_STANDBY
+    5: PRESET_AWAY,
+    129: PRESET_STANDBY,
+    131: PRESET_STANDBY,
+    133: PRESET_STANDBY
 }
 HA_TO_NEVIWEB_STATE = {
-    value: key for key, value in NEVIWEB_TO_HA_STATE.items()
+    value: key for key, value in NEVIWEB_TO_HA_PRESET.items()
 }
-OPERATION_LIST = [STATE_OFF, STATE_MANUAL, HVAC_MODE_AUTO, STATE_AWAY, STATE_STANDBY]
+OPERATION_LIST = [STATE_OFF, PRESET_MANUAL, HVAC_MODE_AUTO, PRESET_AWAY, PRESET_STANDBY]
 
 IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
 
@@ -77,7 +77,7 @@ class NeviwebThermostat(ClimateDevice):
         self._cur_temp = None
         self._rssi = None
         self._alarm = None
-        self._operation_mode = None
+        self._hvac_mode = None
         self._heat_level = None
         self._is_away = False
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
@@ -100,7 +100,7 @@ class NeviwebThermostat(ClimateDevice):
                     device_data["heatLevel"] is not None else 0
                 self._alarm = device_data["alarm"]
                 self._rssi = device_data["rssi"]
-                self._operation_mode = device_data["mode"] if \
+                self._hvac_mode = device_data["mode"] if \
                     device_data["mode"] is not None else 2
                 if device_data["mode"] != NEVIWEB_STATE_AWAY:
                     self._is_away = False
@@ -126,9 +126,9 @@ class NeviwebThermostat(ClimateDevice):
     @property
     def state(self):
         """Return current state i.e. heat, off, idle."""
-        if self.is_on:
+        if self._hvac_mode != HVAC_MODE_OFF:
             return HVAC_MODE_HEAT
-        if self._operation_mode == NEVIWEB_STATE_OFF:
+        if self._hvac_mode == NEVIWEB_STATE_OFF:
             return HVAC_MODE_OFF
         return CURRENT_HVAC_IDLE #STATE_IDLE
 
@@ -165,12 +165,45 @@ class NeviwebThermostat(ClimateDevice):
     @property
     def current_operation(self):
         """Return current operation i.e. off, auto, manual."""
-        return self.to_hass_operation_mode(self._operation_mode)
+        return self.to_hass_operation_mode(self._hvac_mode)
 
     @property
-    def operation_list(self):
+    def hvac_modes(self):
         """Return the list of available operation modes."""
-        return HVAC_MODES #OPERATION_LIST
+        return PRESET_LIST
+
+    @property
+    def hvac_mode(self):
+        """Return current operation."""
+        return self.to_hass_operation_mode(self._hvac_mode)
+
+    @property
+    def preset_modes(self):
+        """Return the list of available operation modes."""
+        return PRESET_LIST
+
+    @property
+    def preset_mode(self):
+        """Return current preset mode."""
+        modes = self.to_hass_operation_mode(self._hvac_mode)
+        for mode in modes: 
+        
+            if mode == HVAC_MODE_AUTO:
+                return HVAC_MODE_AUTO
+        
+            if mode == STATE_OFF:
+                return STATE_OFF
+
+            if mode == PRESET_MANUAL:
+                return PRESET_MANUAL
+
+            if mode == PRESET_AWAY:
+                return PRESET_AWAY
+
+            if mode == PRESET_STANDBY:
+                return PRESET_STANDBY
+    
+        return None
 
     @property
     def current_temperature(self):
@@ -186,11 +219,11 @@ class NeviwebThermostat(ClimateDevice):
     def is_away_mode_on(self):
         return self._is_away
 
-    @property
-    def is_on(self):
-        if self._heat_level == None:
-            self._heat_level = 0
-        return self._heat_level > 0
+ #   @property
+ #   def is_on(self):
+ #       if self._heat_level == None:
+ #           self._heat_level = 0
+ #       return self._heat_level > 0
 
     def set_temperature(self, **kwargs):
         """Set new target temperature."""
@@ -200,12 +233,12 @@ class NeviwebThermostat(ClimateDevice):
         self._client.set_temperature(self._id, temperature)
         self._target_temp = temperature
 
-    def set_operation_mode(self, operation_mode):
+    def set_hvac_mode(self, hvac_mode):
         """Set new operation mode."""
-        mode = self.to_neviweb_operation_mode(operation_mode)
+        mode = self.to_neviweb_hvac_mode(hvac_mode)
         self._client.set_mode(self._id, mode)
 
-    def to_neviweb_operation_mode(self, mode):
+    def to_neviweb_hvac_mode(self, mode):
         """Translate hass operation modes to neviweb modes."""
         if mode in HA_TO_NEVIWEB_STATE:
             return HA_TO_NEVIWEB_STATE[mode]
@@ -214,21 +247,42 @@ class NeviwebThermostat(ClimateDevice):
         
     def to_hass_operation_mode(self, mode):
         """Translate neviweb operation modes to hass operation modes."""
-        if mode in NEVIWEB_TO_HA_STATE:
-            return NEVIWEB_TO_HA_STATE[mode]
+        if mode in NEVIWEB_TO_HA_PRESET:
+            return NEVIWEB_TO_HA_PRESET[mode]
         _LOGGER.error("Operation mode %s could not be mapped to hass", mode)
         return None
     
-    def turn_away_mode_on(self):
-        """Turn away mode on."""
-        self._client.set_mode(self._id, NEVIWEB_STATE_AWAY)
-        self._is_away = True
+    def set_preset(self,preset):
+        """change preset mode."""
+        
+        if preset == self.preset_mode:
+            return
+
+        if preset == STATE_OFF:
+            self._client.set_mode(self._id, STATE_OFF)
+            return "off"
+
+        if preset == NEVIWEB_STATE_AWAY:
+            self._client.set_mode(self._id, NEVIWEB_STATE_AWAY)
+            return "away"
+
+        if preset == PRESET_STANDBY:
+            self._client.set_mode(self._id, PRESET_STANDBY)
+            return "bypass"
+
+        if preset == PRESET_MANUAL:
+            self._client.set_mode(self._id, PRESET_MANUAL)
+            return "manual"
+
+        if preset == HVAC_MODE_AUTO:
+            self._client.set_mode(self._id, HVAC_MODE_AUTO)
+            return "auto" 
 
     def turn_away_mode_off(self):
         """Turn away mode off."""
-        if self._operation_mode >= 129:
-            self._operation_mode = 3 
-        self._client.set_mode(self._id, self._operation_mode)
+        if self._hvac_mode >= 129:
+            self._hvac_mode = 3 
+        self._client.set_mode(self._id, self._hvac_mode)
         self._is_away = False
         
     def turn_off(self):
