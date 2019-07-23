@@ -16,8 +16,8 @@ from . import (SCAN_INTERVAL)
 from homeassistant.components.climate import (ClimateDevice, ATTR_ENTITY_ID, ATTR_TEMPERATURE,
     ATTR_PRESET_MODE, ATTR_HVAC_MODE, ATTR_HVAC_MODES, ATTR_HVAC_ACTIONS, ATTR_CURRENT_TEMPERATURE)
 from homeassistant.components.climate.const import (CURRENT_HVAC_HEAT, 
-    CURRENT_HVAC_IDLE, HVAC_MODE_AUTO, HVAC_MODE_OFF, SUPPORT_TARGET_TEMPERATURE,
-    HVAC_MODE_HEAT, SUPPORT_PRESET_MODE)
+    CURRENT_HVAC_IDLE, CURRENT_HVAC_OFF, CURRENT_HVAC_HEAT, HVAC_MODE_AUTO, HVAC_MODE_OFF, SUPPORT_TARGET_TEMPERATURE,
+    HVAC_MODE_HEAT, SUPPORT_PRESET_MODE, PRESET_AWAY)
 from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, STATE_OFF)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
